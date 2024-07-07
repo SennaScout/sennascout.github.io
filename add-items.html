@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device=width, initial-scale=1.0">
+    <title>Voeg Nieuwe Items Toe - Scouting Collectie</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 1200px; margin: auto; overflow: hidden; padding: 20px; }
+        header { background: #333; color: #fff; padding-top: 30px; min-height: 70px; border-bottom: #e8491d 3px solid; text-align: center; }
+        header nav a { color: #fff; text-decoration: none; text-transform: uppercase; font-size: 16px; margin: 0 15px; }
+        header nav a:hover { color: #e8491d; }
+        form { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px; }
+        label { display: block; margin: 10px 0 5px; }
+        input, textarea, select { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { display: inline-block; padding: 10px 20px; background: #333; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #555; }
+        pre { background: #eee; padding: 20px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Scouting Collectie</h1>
+        <nav>
+            <a href="index.html">Overzicht</a> | 
+            <a href="add-items.html">Voeg Nieuwe Items Toe</a>
+        </nav>
+    </header>
+    <div class="container">
+        <h2>Voeg Nieuwe Items Toe</h2>
+        <form id="itemForm">
+            <label for="imageUrl">Afbeelding URL</label>
+            <input type="text" id="imageUrl" name="imageUrl" required>
+
+            <label for="name">Naam</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="description">Beschrijving</label>
+            <textarea id="description" name="description" required></textarea>
+
+            <label for="category">Categorie</label>
+            <input type="text" id="category" name="category" required>
+
+            <label for="dateOfAcquisition">Datum van Verwerving</label>
+            <input type="date" id="dateOfAcquisition" name="dateOfAcquisition" required>
+
+            <button type="button" onclick="addItem()">Voeg Item Toe</button>
+        </form>
+
+        <h2>Verwijder Items</h2>
+        <form id="removeItemForm">
+            <label for="itemToRemove">Selecteer een item om te verwijderen</label>
+            <select id="itemToRemove">
+                <!-- Options will be populated dynamically -->
+            </select>
+
+            <button type="button" onclick="removeItem()">Verwijder Item</button>
+        </form>
+
+        <h2>Gegenereerde JSON Code</h2>
+        <pre id="jsonOutput">[]</pre>
+        <button onclick="copyJSON()">Kopieer JSON</button>
+    </div>
+    <script>
+        let items = [];
+        let currentItems = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('./data.json') // Vervang dit met uw werkelijke URL
+                .then(response => response.json())
+                .then(data => {
+                    currentItems = data;
+                    populateRemoveItemDropdown();
+                    updateJSONOutput();
+                })
+                .catch(error => console.error('Fout bij het ophalen van gegevens:', error));
+        });
+
+        function addItem() {
+            const form = document.getElementById('itemForm');
+            const newItem = {
+                imageUrl: form.imageUrl.value,
+                name: form.name.value,
+                description: form.description.value,
+                category: form.category.value,
+                dateOfAcquisition: form.dateOfAcquisition.value,
+                dateOfRemoval: ""
+            };
+            items.push(newItem);
+            form.reset();
+            updateJSONOutput();
+        }
+
+        function populateRemoveItemDropdown() {
+            const dropdown = document.getElementById('itemToRemove');
+            dropdown.innerHTML = ''; // Clear existing options
+            currentItems.filter(item => !item.dateOfRemoval).forEach((item, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.text = item.name;
+                dropdown.add(option);
+            });
+        }
+
+        function removeItem() {
+            const dropdown = document.getElementById('itemToRemove');
+            const selectedIndex = dropdown.value;
+            if (selectedIndex >= 0) {
+                currentItems[selectedIndex].dateOfRemoval = new Date().toISOString().split('T')[0];
+                populateRemoveItemDropdown();
+                updateJSONOutput();
+            }
+        }
+
+        function updateJSONOutput() {
+            const jsonOutput = document.getElementById('jsonOutput');
+            jsonOutput.textContent = JSON.stringify([...currentItems, ...items], null, 2);
+        }
+
+        function copyJSON() {
+            const jsonOutput = document.getElementById('jsonOutput');
+            const textArea = document.createElement('textarea');
+            textArea.value = jsonOutput.textContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('JSON code gekopieerd naar klembord!');
+        }
+    </script>
+</body>
+</html>
